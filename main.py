@@ -79,7 +79,6 @@ while running:
     
     player_group.draw(screen)
 
-
     pygame.display.flip()
     pygame.time.Clock().tick(60)
 
