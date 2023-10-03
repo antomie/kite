@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 
 
 pygame.init()
@@ -32,33 +33,53 @@ class Player(pygame.sprite.Sprite):
             self.rect.x -= 5
 
 class bullet(pygame.sprite.Sprite):
-    def __init__(self, start_x, start_y, target_x, target_y):
+    def __init__(self, start_x, start_y, angle):
         super().__init__()
-        self.image = pygame.Surface(5, 5)
+        self.image = pygame.Surface([5, 5])
         self.image.fill("white")
         self.rect = self.image.get_rect()
-        self.rect.x = start_x
-        self.rect.y = start_y
+        self.rect.x = start_x + 25 * math.cos(angle)
+        self.rect.y = start_y + 25 * math.sin(angle)
         self.speed = 20
+        self.angle = angle
 
+    def update(self):
+        self.rect.x += self.speed * math.cos(self.angle)
+        self.rect.y += self.speed * math.sin(self.angle)
+        
 
 
 player = Player(50, 50, 100, 100)
 player_group = pygame.sprite.Group()
 player_group.add(player)
 
+q_group = pygame.sprite.Group()
+
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            angle = math.atan2(mouse_y - player.rect.centery, mouse_x - player.rect.centerx)
+            q = bullet(player.rect.centerx, player.rect.centery, angle)
+            q_group.add(q)
+
     screen.fill("blue")
 
-    
-
-
     player.move(pygame.key.get_pressed)
+
+    q_group.update()
+    q_group.draw(screen)
+
+    
     player_group.draw(screen)
+
+
     pygame.display.flip()
     pygame.time.Clock().tick(60)
 
