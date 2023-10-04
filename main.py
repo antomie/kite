@@ -108,7 +108,6 @@ while running:
     enemy_group.draw(screen)
     enemy_group.update()
     
-    
 
     player.move(pygame.key.get_pressed)
 
