@@ -103,7 +103,6 @@ while running:
             q_group.add(q)
             
     player_group.draw(screen)
-    
 
     enemy_group.draw(screen)
     enemy_group.update()
