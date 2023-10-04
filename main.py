@@ -15,8 +15,8 @@ bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))
 class Player(pygame.sprite.Sprite):
     def __init__(self, width, height, pos_x, pos_y):
         super().__init__()
-        self.image = pygame.Surface([width, height])
-        self.image.fill("blue")
+        self.image = pygame.image.load("pngs/playah.png").convert_alpha()
+        #self.image.fill("blue")
         self.rect = self.image.get_rect()
         self.rect.center = [pos_x, pos_y]
 
