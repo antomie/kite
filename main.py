@@ -77,7 +77,6 @@ class enemies(pygame.sprite.Sprite):
 
         
 
-
 player = Player(50, 50, 100, 100)
 player_group = pygame.sprite.Group()
 player_group.add(player)
