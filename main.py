@@ -8,7 +8,7 @@ screen_width, screen_height = 2160, 1215
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("kite")
 
-bg_img = pygame.image.load("midlane.png")
+bg_img = pygame.image.load("pngs/midlane.png")
 bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))
 
 
@@ -16,7 +16,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, width, height, pos_x, pos_y):
         super().__init__()
         self.image = pygame.Surface([width, height])
-        self.image.fill("white")
+        self.image.fill("blue")
         self.rect = self.image.get_rect()
         self.rect.center = [pos_x, pos_y]
 
@@ -77,7 +77,7 @@ class enemies(pygame.sprite.Sprite):
 
         
 
-player = Player(50, 50, 100, 100)
+player = Player(50, 50, screen_width /2, screen_height /2)
 player_group = pygame.sprite.Group()
 player_group.add(player)
 
