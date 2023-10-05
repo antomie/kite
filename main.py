@@ -3,33 +3,63 @@ import random
 import math
 
 
-pygame.init()
-screen_width, screen_height = 2160, 1215
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("kite")
+pygame.init()  #initialize pygame (ESSENTIAL)
+screen_width, screen_height = 2160, 1215 #set screen width and height
+screen = pygame.display.set_mode((screen_width, screen_height)) #inplement screen width and height
+pygame.display.set_caption("kite") #this is bascically the name of the application
 
-bg_img = pygame.image.load("pngs/midlane.png")
-bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))
+bg_img = pygame.image.load("pngs/midlane.png")   #load bg image
+bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))  #scale image to the screen width and height
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, width, height, pos_x, pos_y):
-        super().__init__()
-        self.image = pygame.image.load("pngs/playah.png").convert_alpha()
-        #self.image.fill("blue")
-        self.rect = self.image.get_rect()
-        self.rect.center = [pos_x, pos_y]
+    def __init__(self, width, height, pos_x, pos_y, speed, fire_rate, movement_delay): #constructor
+        super().__init__() #__init__ is a subclass of sprite, and you need the sprite functions 
+        self.image = pygame.image.load("pngs/playah.png").convert_alpha() #load the player img
+        self.rect = self.image.get_rect() #make a box for the player (like a hitbox)
+        self.rect.center = [pos_x, pos_y] #center the player
+        self.rect.topleft = (pos_x,pos_y)
+        self.target_pos = (pos_x, pos_y) #this is for movement, when you right click it will move to the target position
+        self.speed = speed #speed of player
 
-    def move(self, keys):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:
-            self.rect.y -= 5
-        if keys[pygame.K_d]:
-            self.rect.x += 5
-        if keys[pygame.K_s]:
-            self.rect.y += 5
-        if keys[pygame.K_a]:
-            self.rect.x -= 5
+        #elements to delay rapid fire q's
+        self.fire_rate = fire_rate  
+        self.last_shot_time = 0
+        self.movement_delay = movement_delay
+        self.last_shoot_time = 0
+        self.last_movement_time = 0
+        self.is_shooting = False
+
+    def update(self):
+
+        current_time = pygame.time.get_ticks()
+
+        # Handle shooting logic
+        if self.is_shooting and current_time - self.last_shoot_time >= self.fire_rate:
+            self.last_shoot_time = current_time
+            self.is_shooting = False
+
+        if current_time - self.last_movement_time >= self.movement_delay:
+            dx, dy, = self.target_pos[0] - self.rect.x, self.target_pos[1] - self.rect.y
+            distance = abs(dx) + abs(dy)
+            if distance > 0:
+                move_x = dx / distance * self.speed
+                move_y = dy / distance * self.speed
+                move_x = min(move_x, abs(dx))
+                move_y = min(move_y, abs(dy))
+                self.rect.x += move_x
+                self.rect.y += move_y
+
+    def shoot(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time >= self.fire_rate:
+            self.last_shot_time = current_time
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            angle = math.atan2(mouse_y - self.rect.centery, mouse_x - self.rect.centerx)
+            q = bullet(self.rect.centerx, self.rect.centery, angle)
+            q_group.add(q)
+
+    
 
 class bullet(pygame.sprite.Sprite):
     def __init__(self, start_x, start_y, angle):
@@ -77,7 +107,7 @@ class enemies(pygame.sprite.Sprite):
 
         
 
-player = Player(50, 50, screen_width /2, screen_height /2)
+player = Player(50, 50, screen_width /2, screen_height /2, 5, 1000, 500)
 player_group = pygame.sprite.Group()
 player_group.add(player)
 
@@ -87,6 +117,9 @@ enemy_group.add(enemy)
 
 q_group = pygame.sprite.Group()
 
+
+enemy_spawn_timer = pygame.time.get_ticks()
+spawn_delay = 2000
 running = True
 while running:
     screen.blit(bg_img, (0,0))
@@ -97,18 +130,40 @@ while running:
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
+            """mouse_x, mouse_y = pygame.mouse.get_pos()
             angle = math.atan2(mouse_y - player.rect.centery, mouse_x - player.rect.centerx)
             q = bullet(player.rect.centerx, player.rect.centery, angle)
-            q_group.add(q)
-            
+            q_group.add(q)"""
+            player.shoot()
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+            x, y = pygame.mouse.get_pos()
+            player. target_pos = (x - 50// 2,  y - 50 // 2)
+
+    current_time = pygame.time.get_ticks()
+    if current_time - enemy_spawn_timer >= spawn_delay:
+        enemy = enemies(50, 50, player)
+        enemy_group.add(enemy)
+        enemy_spawn_timer = current_time
+        spawn_delay -= 20
+
+    coll = pygame.sprite.spritecollide(player, enemy_group, False)
+    if coll:
+        print("hit")
+
+    bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
+    if bcoll:
+        print("hit")
+
+    
+
+
     player_group.draw(screen)
 
     enemy_group.draw(screen)
     enemy_group.update()
     
 
-    player.move(pygame.key.get_pressed)
+    player.update()
 
     q_group.update()
     q_group.draw(screen)
