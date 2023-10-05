@@ -1,12 +1,17 @@
 import pygame
 import random
 import math
-
+import os
+import sys
 
 pygame.init()  #initialize pygame (ESSENTIAL)
+pygame.font.init()
+font = pygame.font.Font(None, 48)
 screen_width, screen_height = 2160, 1215 #set screen width and height
 screen = pygame.display.set_mode((screen_width, screen_height)) #inplement screen width and height
 pygame.display.set_caption("kite") #this is bascically the name of the application
+score = 0
+score_incra = 10
 
 bg_img = pygame.image.load("pngs/midlane.png")   #load bg image
 bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))  #scale image to the screen width and height
@@ -130,10 +135,6 @@ while running:
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
-            """mouse_x, mouse_y = pygame.mouse.get_pos()
-            angle = math.atan2(mouse_y - player.rect.centery, mouse_x - player.rect.centerx)
-            q = bullet(player.rect.centerx, player.rect.centery, angle)
-            q_group.add(q)"""
             player.shoot()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             x, y = pygame.mouse.get_pos()
@@ -153,9 +154,11 @@ while running:
     bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
     if bcoll:
         print("hit")
+        score += score_incra
 
-    
 
+    score_text = font.render(f'Score: {score}', True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
 
     player_group.draw(screen)
 
