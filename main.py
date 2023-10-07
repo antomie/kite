@@ -110,6 +110,33 @@ class enemies(pygame.sprite.Sprite):
         self.rect.x += speed * math.cos(angle)
         self.rect.y += speed * math.sin(angle)
 
+
+class balls(pygame.sprite.Sprite):
+    def __init__(self, width, height, player, ang):
+        super().__init__()
+        self.image = pygame.Surface([width, height])
+        self.image.fill("white")
+        self.rect = self.image.get_rect()
+
+        #this is to choose what side the enemies spawn from 
+        side = random.choice(["left", "right", "up", "down"])
+        if side == "left":
+            self.rect.x = -width
+            self.rect.y = random.randint(0, screen_height - height)
+        elif side == "right":
+            self.rect.x = screen_width
+            self.rect.y = random.randint(0, screen_height - height)
+        elif side == "up":
+            self.rect.x = random.randint(0, screen_width - width)
+            self.rect.y = -height
+        else:
+            self.rect.x = random.randint(0, screen_width - width)
+            self.rect.y = screen_height
+        self.player = player
+    def update(self):
+        speed = 5
+        self.rect.x += speed * self.ang
+        self.rect.y += speed * self.ang
         
 
 player = Player(50, 50, screen_width /2, screen_height /2, 5, 1000, 500)
@@ -119,6 +146,8 @@ player_group.add(player)
 enemy_group = pygame.sprite.Group()
 enemy = enemies(50, 50, player)
 enemy_group.add(enemy)
+
+ball_group = pygame.sprite.Group()
 
 q_group = pygame.sprite.Group()
 
@@ -142,10 +171,15 @@ while running:
 
     current_time = pygame.time.get_ticks()
     if current_time - enemy_spawn_timer >= spawn_delay:
+        angle = math.atan2(player.rect.centery - self.rect.centery, self.player.rect.centerx - self.rect.centerx)
+
         enemy = enemies(50, 50, player)
         enemy_group.add(enemy)
+        ball = balls(20, 20, player, angle)
+        ball_group.add(ball)
         enemy_spawn_timer = current_time
         spawn_delay -= 20
+
 
     coll = pygame.sprite.spritecollide(player, enemy_group, False)
     if coll:
@@ -171,7 +205,8 @@ while running:
     q_group.update()
     q_group.draw(screen)
 
-    
+    ball_group.draw(screen)
+    ball_group.update()
     
     pygame.display.update()
     pygame.display.flip()
