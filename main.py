@@ -74,7 +74,7 @@ class bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = start_x + 25 * math.cos(angle)
         self.rect.y = start_y + 25 * math.sin(angle)
-        self.speed = 20
+        self.speed = 30
         self.angle = angle
 
     def update(self):
@@ -112,7 +112,7 @@ class enemies(pygame.sprite.Sprite):
 
 
 class balls(pygame.sprite.Sprite):
-    def __init__(self, width, height, player, ang):
+    def __init__(self, width, height, player):
         super().__init__()
         self.image = pygame.Surface([width, height])
         self.image.fill("white")
@@ -133,13 +133,21 @@ class balls(pygame.sprite.Sprite):
             self.rect.x = random.randint(0, screen_width - width)
             self.rect.y = screen_height
         self.player = player
+        self.angle = math.atan2(self.player.rect.centery - self.rect.centery, self.player.rect.centerx - self.rect.centerx)
+
+
     def update(self):
+        
         speed = 5
-        self.rect.x += speed * self.ang
-        self.rect.y += speed * self.ang
+        self.rect.x += speed * math.cos(self.angle)
+        self.rect.y += speed * math.sin(self.angle)
+
+        # Respawn if the enemy is out of the screen
+        '''if self.rect.left > screen_width or self.rect.right < 0 or \
+           self.rect.top > screen_height or self.rect.bottom < 0:'''
         
 
-player = Player(50, 50, screen_width /2, screen_height /2, 5, 1000, 500)
+player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
 player_group = pygame.sprite.Group()
 player_group.add(player)
 
@@ -171,11 +179,10 @@ while running:
 
     current_time = pygame.time.get_ticks()
     if current_time - enemy_spawn_timer >= spawn_delay:
-        angle = math.atan2(player.rect.centery - self.rect.centery, self.player.rect.centerx - self.rect.centerx)
 
         enemy = enemies(50, 50, player)
         enemy_group.add(enemy)
-        ball = balls(20, 20, player, angle)
+        ball = balls(20, 20, player)
         ball_group.add(ball)
         enemy_spawn_timer = current_time
         spawn_delay -= 20

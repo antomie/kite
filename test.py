@@ -1,85 +1,111 @@
 import pygame
-import sys
+import random
+import math
 
+# Initialize Pygame
 pygame.init()
 
-# Constants
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
-PLAYER_SIZE = 50
-BULLET_SIZE = 10
-WHITE = (255, 255, 255)
-MOVEMENT_SPEED = 5
-SHOOT_DELAY = 1000  # 1 second delay between shots (in milliseconds)
+# Set up display constants
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+BACKGROUND_COLOR = (255, 255, 255)
+
+# Create the screen
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Sprite Movement")
 
 # Player class
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((PLAYER_SIZE, PLAYER_SIZE))
-        self.image.fill(WHITE)
+        self.image = pygame.Surface((50, 50))
+        self.image.fill((255, 0, 0))  # Red color for the player sprite
         self.rect = self.image.get_rect()
-        self.rect.topleft = (x, y)
-        self.target_pos = (x, y)
-        self.last_shot_time = 0
+        self.rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
 
     def update(self):
-        dx = self.target_pos[0] - self.rect.x
-        dy = self.target_pos[1] - self.rect.y
-        distance = abs(dx) + abs(dy)
-        if distance > 0:
-            move_x = dx / distance * MOVEMENT_SPEED
-            move_y = dy / distance * MOVEMENT_SPEED
-            move_x = min(move_x, abs(dx))
-            move_y = min(move_y, abs(dy))
-            self.rect.x += move_x
-            self.rect.y += move_y
+        # Get the mouse position
+        mouse_pos = pygame.mouse.get_pos()
+        self.rect.midtop = mouse_pos
 
-    def shoot(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.last_shot_time >= SHOOT_DELAY:
-            self.last_shot_time = current_time
-            bullet = Bullet(self.rect.centerx, self.rect.centery)
-            all_sprites.add(bullet)
-            bullets.add(bullet)
-
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+# Enemy class
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((BULLET_SIZE, BULLET_SIZE))
-        self.image.fill(WHITE)
+        self.image = pygame.Surface((30, 30))
+        self.image.fill((0, 0, 255))  # Blue color for the enemy sprite
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+
+        # Spawn the enemy from a random side of the screen
+        spawn_side = random.choice(["top", "bottom", "left", "right"])
+        if spawn_side == "top":
+            self.rect.x = random.randint(0, SCREEN_WIDTH - self.rect.width)
+            self.rect.y = -self.rect.height
+        elif spawn_side == "bottom":
+            self.rect.x = random.randint(0, SCREEN_WIDTH - self.rect.width)
+            self.rect.y = SCREEN_HEIGHT
+        elif spawn_side == "left":
+            self.rect.x = -self.rect.width
+            self.rect.y = random.randint(0, SCREEN_HEIGHT - self.rect.height)
+        elif spawn_side == "right":
+            self.rect.x = SCREEN_WIDTH
+            self.rect.y = random.randint(0, SCREEN_HEIGHT - self.rect.height)
+
+        # Set a random angle for movement
+        self.angle = math.radians(random.randint(0, 360))
 
     def update(self):
-        self.rect.x += 5  # Adjust the bullet speed
-        if self.rect.left > SCREEN_WIDTH:
-            self.kill()
+        # Move the enemy sprite at a specific angle
+        speed = 5
+        self.rect.x += speed * math.cos(self.angle)
+        self.rect.y += speed * math.sin(self.angle)
 
-# Initialize Pygame
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption('Delayed Shooting Example')
+        # Respawn if the enemy is out of the screen
+        if self.rect.left > SCREEN_WIDTH or self.rect.right < 0 or \
+           self.rect.top > SCREEN_HEIGHT or self.rect.bottom < 0:
+            self.__init__()
 
-player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-all_sprites = pygame.sprite.Group(player)
-bullets = pygame.sprite.Group()
+# Create sprite groups
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+
+# Create player sprite and add it to the sprite groups
+player = Player()
+all_sprites.add(player)
+
+# Create enemy sprites and add them to the sprite groups
+for _ in range(3):
+    enemy = Enemy()
+    all_sprites.add(enemy)
+    enemies.add(enemy)
 
 # Game loop
-while True:
-    # Handle events
+running = True
+clock = pygame.time.Clock()
+
+while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            player.target_pos = pygame.mouse.get_pos()
-            player.shoot()
+            running = False
 
     # Update
     all_sprites.update()
 
+    # Check for collisions between player and enemies
+    hits = pygame.sprite.spritecollide(player, enemies, False)
+    if hits:
+        print("Player was hit!")
+        running = False
+
     # Draw
-    screen.fill((0, 0, 0))
+    screen.fill(BACKGROUND_COLOR)
     all_sprites.draw(screen)
 
+    # Refresh screen
     pygame.display.flip()
-    pygame.time.Clock().tick(60)  # Limit the frame rate to 60 FPS
+
+    # Limit frames per second
+    clock.tick(60)
+
+# Quit the game
+pygame.quit()
