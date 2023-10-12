@@ -10,9 +10,8 @@ font = pygame.font.Font(None, 48)
 screen_width, screen_height = 2160, 1215 #set screen width and height
 screen = pygame.display.set_mode((screen_width, screen_height)) #inplement screen width and height
 pygame.display.set_caption("kite") #this is bascically the name of the application
-score = 0
 score_incra = 10
-
+score = 0
 bg_img = pygame.image.load("pngs/midlane.png")   #load bg image
 bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))  #scale image to the screen width and height
 
@@ -63,23 +62,28 @@ class Player(pygame.sprite.Sprite):
             angle = math.atan2(mouse_y - self.rect.centery, mouse_x - self.rect.centerx)
             q = bullet(self.rect.centerx, self.rect.centery, angle)
             q_group.add(q)
-
     
 
 class bullet(pygame.sprite.Sprite):
     def __init__(self, start_x, start_y, angle):
         super().__init__()
-        self.image = pygame.Surface([5, 5])
-        self.image.fill("white")
+        self.image = pygame.image.load("pngs/plasma.png").convert_alpha() 
         self.rect = self.image.get_rect()
         self.rect.x = start_x + 25 * math.cos(angle)
         self.rect.y = start_y + 25 * math.sin(angle)
         self.speed = 30
         self.angle = angle
+        self.max_distance = 600
+        self.distance_travelled = 0
 
     def update(self):
         self.rect.x += self.speed * math.cos(self.angle)
         self.rect.y += self.speed * math.sin(self.angle)
+        self.distance_travelled += abs(self.speed)
+
+        if self.distance_travelled >= self.max_distance:
+                self.kill()
+
 
 class enemies(pygame.sprite.Sprite):
     def __init__(self, width, height, player):
@@ -147,16 +151,11 @@ class balls(pygame.sprite.Sprite):
            self.rect.top > screen_height or self.rect.bottom < 0:'''
         
 
+
 player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
 player_group = pygame.sprite.Group()
-player_group.add(player)
-
 enemy_group = pygame.sprite.Group()
-enemy = enemies(50, 50, player)
-enemy_group.add(enemy)
-
 ball_group = pygame.sprite.Group()
-
 q_group = pygame.sprite.Group()
 
 
@@ -168,8 +167,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                player_group.add(player)
 
+
+                
         keys = pygame.key.get_pressed()
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
             player.shoot()
@@ -179,7 +182,6 @@ while running:
 
     current_time = pygame.time.get_ticks()
     if current_time - enemy_spawn_timer >= spawn_delay:
-
         enemy = enemies(50, 50, player)
         enemy_group.add(enemy)
         ball = balls(20, 20, player)
@@ -187,19 +189,28 @@ while running:
         enemy_spawn_timer = current_time
         spawn_delay -= 20
 
+    font = pygame.font.Font(None, 36)
+    text = font.render('Score: {}'.format(score), True, "WHITE")
+    text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
 
     coll = pygame.sprite.spritecollide(player, enemy_group, False)
     if coll:
-        print("hit")
+        print("hit by enemy")
+
+    coll = pygame.sprite.spritecollide(player, ball_group, False)
+    if coll:
+        print("hit by balls")
 
     bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
     if bcoll:
-        print("hit")
+        print("kill")
         score += score_incra
-
-
+    
     score_text = font.render(f'Score: {score}', True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
+
+
+
 
     player_group.draw(screen)
 

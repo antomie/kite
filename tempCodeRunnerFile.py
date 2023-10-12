@@ -1,2 +1,2 @@
 
-            self.rect.x = screen_width
+                    enemy_spawn_timer = current_time
