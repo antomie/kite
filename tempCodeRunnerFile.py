@@ -1,2 +1,2 @@
 
-                    enemy_spawn_timer = current_time
+            enemy = enemies(50, 50, player)

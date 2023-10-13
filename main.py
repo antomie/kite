@@ -152,27 +152,32 @@ class balls(pygame.sprite.Sprite):
         
 
 
+'''player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
+player_group = pygame.sprite.Group()
+player_group.add(player)
+enemy_group = pygame.sprite.Group()
+ball_group = pygame.sprite.Group()
+q_group = pygame.sprite.Group()'''
+
 player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
 q_group = pygame.sprite.Group()
 
-
 enemy_spawn_timer = pygame.time.get_ticks()
 spawn_delay = 2000
 running = True
+start = 0
+running = 1
+game_state = start
 while running:
-    screen.blit(bg_img, (0,0))
+    #screen.blit(bg_img, (0,0))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RETURN:
-                player_group.add(player)
-
-
-                
+        if game_state == start and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                game_state = running
         keys = pygame.key.get_pressed()
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
             player.shoot()
@@ -180,54 +185,79 @@ while running:
             x, y = pygame.mouse.get_pos()
             player. target_pos = (x - 50// 2,  y - 50 // 2)
 
-    current_time = pygame.time.get_ticks()
-    if current_time - enemy_spawn_timer >= spawn_delay:
-        enemy = enemies(50, 50, player)
-        enemy_group.add(enemy)
-        ball = balls(20, 20, player)
-        ball_group.add(ball)
-        enemy_spawn_timer = current_time
-        spawn_delay -= 20
+    if game_state == start:
+        screen.fill("white")
 
-    font = pygame.font.Font(None, 36)
-    text = font.render('Score: {}'.format(score), True, "WHITE")
-    text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
+        # Draw start screen text
+        text = font.render("Welcome to My Game", True, "black")
+        text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
+        screen.blit(text, text_rect)
 
-    coll = pygame.sprite.spritecollide(player, enemy_group, False)
-    if coll:
-        print("hit by enemy")
+        instructions = font.render("Press SPACE to Start", True, "black")
+        instructions_rect = instructions.get_rect(center=(screen_width// 2, screen_height // 2 + 50))
+        screen.blit(instructions, instructions_rect)
 
-    coll = pygame.sprite.spritecollide(player, ball_group, False)
-    if coll:
-        print("hit by balls")
-
-    bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
-    if bcoll:
-        print("kill")
-        score += score_incra
     
-    score_text = font.render(f'Score: {score}', True, (255, 255, 255))
-    screen.blit(score_text, (10, 10))
+    elif game_state == running:
+
+        screen.blit(bg_img, (0,0))
+        keys = pygame.key.get_pressed() 
+        if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
+            player.shoot()
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+            x, y = pygame.mouse.get_pos()
+            player. target_pos = (x - 50// 2,  y - 50 // 2)
+
+        
+        
+        font = pygame.font.Font(None, 36)
+        text = font.render('Score: {}'.format(score), True, "WHITE")
+        text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
+
+        coll = pygame.sprite.spritecollide(player, enemy_group, False)
+        if coll:
+            print("hit by enemy")
+
+        coll = pygame.sprite.spritecollide(player, ball_group, False)
+        if coll:
+            print("hit by balls")
+
+        bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
+        if bcoll:
+            print("kill")
+            score += score_incra
+        
+        score_text = font.render(f'Score: {score}', True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))
 
 
+        player_group.add(player)
+        current_time = pygame.time.get_ticks()
+        if current_time - enemy_spawn_timer >= spawn_delay:
+            enemy = enemies(50, 50, player)
+            enemy_group.add(enemy)
+            ball = balls(20, 20, player)
+            ball_group.add(ball)
+            enemy_spawn_timer = current_time
+            spawn_delay -= 20
+        
+        player_group.draw(screen)
 
+        enemy_group.draw(screen)
+        enemy_group.update()
+        
 
-    player_group.draw(screen)
+        player.update()
 
-    enemy_group.draw(screen)
-    enemy_group.update()
-    
+        q_group.update()
+        q_group.draw(screen)
 
-    player.update()
+        ball_group.draw(screen)
+        ball_group.update()
 
-    q_group.update()
-    q_group.draw(screen)
-
-    ball_group.draw(screen)
-    ball_group.update()
-    
-    pygame.display.update()
     pygame.display.flip()
+    pygame.display.update()
+    
     pygame.time.Clock().tick(60)
 
 pygame.quit()
