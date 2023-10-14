@@ -170,6 +170,7 @@ spawn_delay = 2000
 running = True
 start = 0
 running = 1
+dead =  2
 game_state = start
 while running:
     #screen.blit(bg_img, (0,0))
@@ -217,10 +218,12 @@ while running:
         coll = pygame.sprite.spritecollide(player, enemy_group, False)
         if coll:
             print("hit by enemy")
+            game_state = dead
 
         coll = pygame.sprite.spritecollide(player, ball_group, False)
         if coll:
             print("hit by balls")
+            game_state = dead
 
         bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
         if bcoll:
@@ -254,6 +257,17 @@ while running:
 
         ball_group.draw(screen)
         ball_group.update()
+
+    elif game_state == dead:
+        screen.fill("white")
+
+        # Draw start screen text
+        text = font.render("You dead", True, "black")
+        text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
+        screen.blit(text, text_rect)
+
+        score_text = font.render(f'Score: {score}', True, (255, 255, 255))
+        screen.blit(score_text, (screen_width /2, screen_height /2))
 
     pygame.display.flip()
     pygame.display.update()
