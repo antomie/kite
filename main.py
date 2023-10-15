@@ -17,7 +17,7 @@ bg_img = pygame.transform.scale(bg_img,(screen_width, screen_height))  #scale im
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, width, height, pos_x, pos_y, speed, fire_rate, movement_delay): #constructor
+    def __init__(self, pos_x, pos_y, speed, fire_rate, movement_delay): #constructor
         super().__init__() #__init__ is a subclass of sprite, and you need the sprite functions 
         self.image = pygame.image.load("pngs/playah.png").convert_alpha() #load the player img
         self.rect = self.image.get_rect() #make a box for the player (like a hitbox)
@@ -62,6 +62,9 @@ class Player(pygame.sprite.Sprite):
             angle = math.atan2(mouse_y - self.rect.centery, mouse_x - self.rect.centerx)
             q = bullet(self.rect.centerx, self.rect.centery, angle)
             q_group.add(q)
+    
+    def reset(self, pos_x, pos_y):
+        self.rect.center = [pos_x, pos_y]
     
 
 class bullet(pygame.sprite.Sprite):
@@ -139,27 +142,27 @@ class balls(pygame.sprite.Sprite):
         self.player = player
         self.angle = math.atan2(self.player.rect.centery - self.rect.centery, self.player.rect.centerx - self.rect.centerx)
 
-
     def update(self):
-        
         speed = 5
         self.rect.x += speed * math.cos(self.angle)
         self.rect.y += speed * math.sin(self.angle)
-
-        # Respawn if the enemy is out of the screen
-        '''if self.rect.left > screen_width or self.rect.right < 0 or \
-           self.rect.top > screen_height or self.rect.bottom < 0:'''
         
+class Button:
+    def __init__(self, x, y, width, height, color, text, text_color):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.rect.center = [x, y] 
+        self.color = color
+        self.text = text
+        self.text_color = text_color
 
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color, self.rect)
+        font = pygame.font.Font(None, 36)
+        text = font.render(self.text, True, self.text_color)
+        text_rect = text.get_rect(center=self.rect.center)
+        surface.blit(text, text_rect)
 
-'''player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
-player_group = pygame.sprite.Group()
-player_group.add(player)
-enemy_group = pygame.sprite.Group()
-ball_group = pygame.sprite.Group()
-q_group = pygame.sprite.Group()'''
-
-player = Player(50, 50, screen_width /2, screen_height /2, 10, 1000, 500)
+player = Player(screen_width /2, screen_height /2, 10, 1000, 500)
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
@@ -172,6 +175,7 @@ start = 0
 running = 1
 dead =  2
 game_state = start
+
 while running:
     #screen.blit(bg_img, (0,0))
     for event in pygame.event.get():
@@ -184,7 +188,7 @@ while running:
             player.shoot()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             x, y = pygame.mouse.get_pos()
-            player. target_pos = (x - 50// 2,  y - 50 // 2)
+            player.target_pos = (x - 50// 2,  y - 50 // 2)
 
     if game_state == start:
         screen.fill("white")
@@ -197,7 +201,6 @@ while running:
         instructions = font.render("Press SPACE to Start", True, "black")
         instructions_rect = instructions.get_rect(center=(screen_width// 2, screen_height // 2 + 50))
         screen.blit(instructions, instructions_rect)
-
     
     elif game_state == running:
 
@@ -209,20 +212,31 @@ while running:
             x, y = pygame.mouse.get_pos()
             player. target_pos = (x - 50// 2,  y - 50 // 2)
 
-        
-        
         font = pygame.font.Font(None, 36)
         text = font.render('Score: {}'.format(score), True, "WHITE")
         text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
 
-        coll = pygame.sprite.spritecollide(player, enemy_group, False)
-        if coll:
+        coll1 = pygame.sprite.spritecollide(player, enemy_group, False)
+        if coll1:
             print("hit by enemy")
+            player_group.remove(player)
+            player.kill()
+            player_group.empty()
+            enemy_group.empty()
+            ball_group.empty()
+            q_group.empty()
+            player_group.draw(screen)
             game_state = dead
 
-        coll = pygame.sprite.spritecollide(player, ball_group, False)
-        if coll:
+        coll2 = pygame.sprite.spritecollide(player, ball_group, False)
+        if coll2:
             print("hit by balls")
+            player_group.remove(player)
+            player.kill()
+            player_group.empty()
+            enemy_group.empty()
+            ball_group.empty()
+            q_group.empty()
             game_state = dead
 
         bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
@@ -232,7 +246,6 @@ while running:
         
         score_text = font.render(f'Score: {score}', True, (255, 255, 255))
         screen.blit(score_text, (10, 10))
-
 
         player_group.add(player)
         current_time = pygame.time.get_ticks()
@@ -245,16 +258,11 @@ while running:
             spawn_delay -= 20
         
         player_group.draw(screen)
-
         enemy_group.draw(screen)
         enemy_group.update()
-        
-
         player.update()
-
         q_group.update()
         q_group.draw(screen)
-
         ball_group.draw(screen)
         ball_group.update()
 
@@ -266,8 +274,17 @@ while running:
         text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
         screen.blit(text, text_rect)
 
-        score_text = font.render(f'Score: {score}', True, (255, 255, 255))
-        screen.blit(score_text, (screen_width /2, screen_height /2))
+        score_text = font.render(f'Score: {score}', True, "black")
+        screen.blit(score_text, score_text.get_rect(center = (screen_width //2, screen_height //2)))
+
+        button = Button(screen_width //2, screen_height //2 + 100, 300, 100, "black", 'retry', 'white')
+        button.draw(screen)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Check if the mouse click is inside the button
+            if button.rect.collidepoint(event.pos):
+                print('Button Clicked!')
+                player = Player(screen_width /2, screen_height /2, 10, 1000, 500)
+                game_state = running
 
     pygame.display.flip()
     pygame.display.update()
