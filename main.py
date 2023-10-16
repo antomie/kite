@@ -225,7 +225,6 @@ while running:
             enemy_group.empty()
             ball_group.empty()
             q_group.empty()
-            player_group.draw(screen)
             game_state = dead
 
         coll2 = pygame.sprite.spritecollide(player, ball_group, False)
@@ -268,8 +267,10 @@ while running:
 
     elif game_state == dead:
         screen.fill("white")
-
-        # Draw start screen text
+        player_group.empty()
+        player.kill()
+        score = 0
+        # Draw start screen text    
         text = font.render("You dead", True, "black")
         text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
         screen.blit(text, text_rect)

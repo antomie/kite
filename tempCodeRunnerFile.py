@@ -1,1 +1,2 @@
-0
+
+            player_group.empty()
