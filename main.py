@@ -38,7 +38,7 @@ class Player(pygame.sprite.Sprite):
 
         current_time = pygame.time.get_ticks()
 
-        # Handle shooting logic
+        # attempt to make the player stop to shoot the bullet but idk why it dont work
         if self.is_shooting and current_time - self.last_shoot_time >= self.fire_rate:
             self.last_shoot_time = current_time
             self.is_shooting = False
@@ -54,6 +54,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x += move_x
                 self.rect.y += move_y
 
+    #shoot bullet function, has code to add delay between each shot to make it like league
     def shoot(self):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_shot_time >= self.fire_rate:
@@ -84,6 +85,7 @@ class bullet(pygame.sprite.Sprite):
         self.rect.y += self.speed * math.sin(self.angle)
         self.distance_travelled += abs(self.speed)
 
+        #this is to add a range to the bullet, like ezreal q in league of legends
         if self.distance_travelled >= self.max_distance:
                 self.kill()
 
@@ -111,6 +113,7 @@ class enemies(pygame.sprite.Sprite):
             self.rect.y = screen_height
         self.player = player
 
+    #movement to attract the enemy towards the player
     def update(self):
         angle = math.atan2(self.player.rect.centery - self.rect.centery, self.player.rect.centerx - self.rect.centerx)
         speed = 5
@@ -147,6 +150,7 @@ class balls(pygame.sprite.Sprite):
         self.rect.x += speed * math.cos(self.angle)
         self.rect.y += speed * math.sin(self.angle)
         
+#class for a button... bro why
 class Button:
     def __init__(self, x, y, width, height, color, text, text_color):
         self.rect = pygame.Rect(x, y, width, height)
@@ -167,7 +171,6 @@ player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 ball_group = pygame.sprite.Group()
 q_group = pygame.sprite.Group()
-
 enemy_spawn_timer = pygame.time.get_ticks()
 spawn_delay = 2000
 running = True
@@ -181,15 +184,20 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        #press space to start the game
         if game_state == start and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_state = running
         keys = pygame.key.get_pressed()
+
+        #making the shooting and movement more consistant like league of legends
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
             player.shoot()
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             x, y = pygame.mouse.get_pos()
             player.target_pos = (x - 50// 2,  y - 50 // 2)
 
+    #start screen
     if game_state == start:
         screen.fill("white")
 
@@ -206,16 +214,22 @@ while running:
 
         screen.blit(bg_img, (0,0))
         keys = pygame.key.get_pressed() 
+
+        #if q is pressed, shoot
         if keys[pygame.K_q] and event.type == pygame.KEYDOWN:
             player.shoot()
+
+        # if right click, then move towards position clicked
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             x, y = pygame.mouse.get_pos()
             player. target_pos = (x - 50// 2,  y - 50 // 2)
 
+        
         font = pygame.font.Font(None, 36)
         text = font.render('Score: {}'.format(score), True, "WHITE")
         text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2))
 
+        #collisions with player and enemeies
         coll1 = pygame.sprite.spritecollide(player, enemy_group, False)
         if coll1:
             print("hit by enemy")
@@ -226,7 +240,8 @@ while running:
             ball_group.empty()
             q_group.empty()
             game_state = dead
-
+        
+        #collisions with player and the random balls flying around
         coll2 = pygame.sprite.spritecollide(player, ball_group, False)
         if coll2:
             print("hit by balls")
@@ -238,15 +253,19 @@ while running:
             q_group.empty()
             game_state = dead
 
+        #collisions with bullets and enemies
         bcoll = pygame.sprite.groupcollide(q_group, enemy_group, True, True)
         if bcoll:
             print("kill")
             score += score_incra
         
+        #load score in the top left corner
         score_text = font.render(f'Score: {score}', True, (255, 255, 255))
         screen.blit(score_text, (10, 10))
 
         player_group.add(player)
+
+        #enemy spawn time
         current_time = pygame.time.get_ticks()
         if current_time - enemy_spawn_timer >= spawn_delay:
             enemy = enemies(50, 50, player)
@@ -254,7 +273,7 @@ while running:
             ball = balls(20, 20, player)
             ball_group.add(ball)
             enemy_spawn_timer = current_time
-            spawn_delay -= 20
+            spawn_delay -= 50
         
         player_group.draw(screen)
         enemy_group.draw(screen)
@@ -269,22 +288,23 @@ while running:
         screen.fill("white")
         player_group.empty()
         player.kill()
-        score = 0
-        # Draw start screen text    
+        # death text
         text = font.render("You dead", True, "black")
         text_rect = text.get_rect(center=(screen_width // 2, screen_height // 2 - 50))
         screen.blit(text, text_rect)
 
+        # score text
         score_text = font.render(f'Score: {score}', True, "black")
         screen.blit(score_text, score_text.get_rect(center = (screen_width //2, screen_height //2)))
 
+        #retry button
         button = Button(screen_width //2, screen_height //2 + 100, 300, 100, "black", 'retry', 'white')
         button.draw(screen)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             # Check if the mouse click is inside the button
             if button.rect.collidepoint(event.pos):
-                print('Button Clicked!')
                 player = Player(screen_width /2, screen_height /2, 10, 1000, 500)
+                score = 0
                 game_state = running
 
     pygame.display.flip()
